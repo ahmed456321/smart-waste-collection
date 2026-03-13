@@ -279,6 +279,10 @@ router.get('/admin/stats', protect, authorize('admin'), async (req, res) => {
         const collected = await Report.countDocuments({ status: 'collected' });
         const assigned  = await Report.countDocuments({ status: 'assigned' });
 
+        const totalDrivers = await User.countDocuments({ role: 'driver' });
+        const activeMissions = await Report.distinct('assignedDriver', { status: { $in: ['assigned', 'in-transit'] } });
+        const activeDrivers = activeMissions.length;
+
         const categories = await Report.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]);
 
         const sevenDaysAgo = new Date();
@@ -293,7 +297,7 @@ router.get('/admin/stats', protect, authorize('admin'), async (req, res) => {
         const recentReports = await Report.find().limit(10).sort({ createdAt: -1 })
             .populate('reportedBy', 'name').populate('assignedDriver', 'name');
 
-        res.json({ total, pending, collected, assigned, performance, categories, dailyReports, recentReports });
+        res.json({ total, pending, collected, assigned, performance, categories, dailyReports, recentReports, totalDrivers, activeDrivers });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 

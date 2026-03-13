@@ -22,6 +22,16 @@ async function fetchStats() {
     document.getElementById('statTotal').innerText = data.total;
     document.getElementById('statPending').innerText = data.pending;
     
+    const fleetEl = document.getElementById('statFleet');
+    const fleetUtilEl = document.getElementById('statFleetUtil');
+    if (fleetEl && fleetUtilEl) {
+        const active = data.activeDrivers || 0;
+        const totalD = data.totalDrivers || 0;
+        fleetEl.innerText = `${active}/${totalD}`;
+        const util = totalD > 0 ? Math.round((active / totalD) * 100) : 0;
+        fleetUtilEl.innerText = `${util}% utilization`;
+    }
+    
     // Update Recent Reports Table
     const tableBody = document.getElementById('reportsTable');
     tableBody.innerHTML = '';
