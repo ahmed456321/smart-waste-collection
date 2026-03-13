@@ -32,7 +32,7 @@ async function fetchStats() {
                 <td>${new Date(report.createdAt).toLocaleDateString()}</td>
                 <td><span style="font-weight: 700; color: var(--primary);">${report.category.toUpperCase()}</span></td>
                 <td><div style="display:flex; align-items:center; gap:8px;"><i class="fas fa-location-dot" style="font-size:0.8rem;"></i> ${report.location.address ? report.location.address.substring(0,25)+'...' : 'GEO-LOCATED'}</div></td>
-                <td>${report.reportedBy ? report.reportedBy.username : 'Anonymous'}</td>
+                <td>${report.reportedBy ? report.reportedBy.name : 'Anonymous'}</td>
                 <td><span class="badge ${report.status}">${report.status}</span></td>
                 <td>
                     ${report.status === 'pending' ? `
@@ -157,7 +157,7 @@ async function fetchDrivers() {
     if (select) {
         select.innerHTML = '<option value="">Select Available Dispatch Unit...</option>';
         drivers.forEach(d => {
-            select.innerHTML += `<option value="${d._id}">${d.username.toUpperCase()} (ID: ${d._id.substr(-4)})</option>`;
+            select.innerHTML += `<option value="${d._id}">${d.name.toUpperCase()} (ID: ${d._id.substr(-4)})</option>`;
         });
     }
 }

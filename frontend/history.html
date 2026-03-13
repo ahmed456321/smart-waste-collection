@@ -84,7 +84,7 @@
             }
 
             try {
-                const res = await fetch(`http://localhost:5000/api/my-reports/${user.id}`);
+                const res = await fetch(`/api/my-reports/${user.id}`);
                 const reports = await res.json();
                 const container = document.getElementById('historyList');
                 const emptyState = document.getElementById('emptyState');

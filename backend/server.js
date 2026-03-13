@@ -35,7 +35,13 @@ app.get('*', (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Smart Waste Backend running at http://localhost:${PORT}`);
-    console.log(`📂 Static uploads served from /uploads`);
-});
+// For local development
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Smart Waste Backend running at http://localhost:${PORT}`);
+        console.log(`📂 Static uploads served from /uploads`);
+    });
+}
+
+// Export for Vercel
+module.exports = app;

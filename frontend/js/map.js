@@ -1,102 +1,84 @@
 let map;
-let markers = [];
-const MAP_STYLE = [
-    { "elementType": "geometry", "stylers": [{ "color": "#020617" }] },
-    { "elementType": "labels.text.fill", "stylers": [{ "color": "#94a3b8" }] },
-    { "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] },
-    { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
-    { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
-    { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#334155" }] },
-    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] }
-];
+let markersLayer = L.layerGroup();
+const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 function initReportMap() {
-    const defaultLoc = { lat: 40.7128, lng: -74.0060 };
-    map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 15,
+    const defaultLoc = [40.7128, -74.0060];
+    map = L.map('map', {
         center: defaultLoc,
-        styles: MAP_STYLE,
-        disableDefaultUI: true,
-        zoomControl: true,
+        zoom: 15,
+        zoomControl: false,
+        attributionControl: false
     });
 
-    const marker = new google.maps.Marker({
-        map: map,
-        draggable: true,
-        animation: google.maps.Animation.DROP,
-        position: defaultLoc,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: '#10b981',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#ffffff',
-            scale: 8
-        }
+    L.tileLayer(DARK_TILES, { attribution: ATTRIBUTION }).addTo(map);
+
+    const ecoMarkerIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div style='background-color:#10b981; width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px rgba(16,185,129,0.5);'></div>`,
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]
     });
+
+    let marker = L.marker(defaultLoc, { icon: ecoMarkerIcon, draggable: true }).addTo(map);
 
     window.updateMapMarker = (coords) => {
-        if (map && marker) {
-            map.setCenter(coords);
-            marker.setPosition(coords);
-        }
+        const newPos = [coords.lat, coords.lng];
+        map.setView(newPos, 15);
+        marker.setLatLng(newPos);
     };
+
+    // Update coordinates on drag
+    marker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        window.currentCoords = { lat: pos.lat, lng: pos.lng };
+        document.getElementById('locationStatus').innerText = `MANUAL OVERRIDE: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`;
+    });
 }
 
 async function initAdminMap() {
     try {
-        const res = await fetch('http://localhost:5000/api/admin/reports');
+        const res = await fetch('/api/admin/reports');
         const reports = await res.json();
         
-        map = new google.maps.Map(document.getElementById("adminMap"), {
+        map = L.map('adminMap', {
+            center: [40.7128, -74.0060],
             zoom: 12,
-            center: { lat: 40.7128, lng: -74.0060 },
-            styles: MAP_STYLE,
-            disableDefaultUI: true,
-            zoomControl: true,
+            zoomControl: false,
+            attributionControl: false
         });
+
+        L.tileLayer(DARK_TILES, { attribution: ATTRIBUTION }).addTo(map);
+        markersLayer.addTo(map);
+
+        const bounds = [];
 
         reports.forEach(report => {
             const color = report.status === 'pending' ? '#f59e0b' : '#10b981';
-            const marker = new google.maps.Marker({
-                position: { lat: parseFloat(report.location.lat), lng: parseFloat(report.location.lng) },
-                map: map,
-                title: report.category,
-                icon: {
-                    path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-                    fillColor: color,
-                    fillOpacity: 1,
-                    strokeWeight: 1,
-                    strokeColor: '#ffffff',
-                    scale: 6
-                }
-            });
-
-            const infoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div style="padding: 10px; color: #020617; max-width: 200px;">
-                        <h4 style="margin: 0 0 5px 0; color: #10b981;">${report.category.toUpperCase()}</h4>
-                        <p style="margin: 0 0 8px 0; font-size: 0.85rem;">${report.description || 'No description provided.'}</p>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="font-size: 0.75rem; padding: 2px 6px; background: ${color}22; color: ${color}; border-radius: 4px; font-weight: 600;">
-                                ${report.status.toUpperCase()}
-                            </span>
-                        </div>
-                    </div>
-                `
-            });
-
-            marker.addListener("click", () => {
-                infoWindow.open(map, marker);
-            });
+            const pos = [parseFloat(report.location.lat), parseFloat(report.location.lng)];
             
-            markers.push(marker);
+            const markerIcon = L.divIcon({
+                className: 'report-icon',
+                html: `<div style='background-color:${color}; width:10px; height:10px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 10px ${color}88;'></div>`,
+                iconSize: [10, 10]
+            });
+
+            const marker = L.marker(pos, { icon: markerIcon })
+                .bindPopup(`
+                    <div style="padding: 10px; color: #fff; background: #020617; border-radius: 8px;">
+                        <h4 style="margin: 0 0 5px 0; color: #10b981;">${report.category.toUpperCase()}</h4>
+                        <p style="margin: 0; font-size: 0.8rem; color: #94a3b8;">${report.description || 'No notes.'}</p>
+                        <hr style="border:0; border-top:1px solid #1e293b; margin: 8px 0;">
+                        <div style="font-size: 0.7rem; font-weight: 700; color:${color}">${report.status.toUpperCase()}</div>
+                    </div>
+                `, { className: 'glass-popup' });
+
+            markersLayer.addLayer(marker);
+            bounds.push(pos);
         });
 
-        if (reports.length > 0) {
-            const bounds = new google.maps.LatLngBounds();
-            reports.forEach(r => bounds.extend({ lat: parseFloat(r.location.lat), lng: parseFloat(r.location.lng) }));
+        if (bounds.length > 0) {
             map.fitBounds(bounds);
         }
     } catch (err) {

@@ -134,7 +134,7 @@ router.get('/my-reports/:userId', async (req, res) => {
 
 router.get('/auth/profile/:userId', async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).select('username email role ecoPoints');
+        const user = await User.findById(req.params.userId).select('name email role ecoPoints');
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -173,7 +173,7 @@ router.get('/admin/stats', protect, authorize('admin'), async (req, res) => {
         const recentReports = await Report.find()
             .limit(5)
             .sort({ createdAt: -1 })
-            .populate('reportedBy', 'username');
+            .populate('reportedBy', 'name');
         
         res.json({ 
             total, 
@@ -192,7 +192,7 @@ router.get('/admin/stats', protect, authorize('admin'), async (req, res) => {
 
 router.get('/admin/drivers', protect, authorize('admin'), async (req, res) => {
     try {
-        const drivers = await User.find({ role: 'driver' }).select('username status');
+        const drivers = await User.find({ role: 'driver' }).select('name status');
         res.json(drivers);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -203,8 +203,8 @@ router.get('/admin/reports', protect, authorize('admin'), async (req, res) => {
     try {
         const reports = await Report.find()
             .sort({ createdAt: -1 })
-            .populate('reportedBy', 'username')
-            .populate('assignedDriver', 'username');
+            .populate('reportedBy', 'name')
+            .populate('assignedDriver', 'name');
         res.json(reports);
     } catch (err) {
         res.status(500).json({ error: err.message });
