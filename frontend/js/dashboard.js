@@ -8,6 +8,7 @@ async function initAdminDashboard() {
     try {
         await fetchStats();
         await fetchDrivers();
+        if (typeof initAdminMap === 'function') initAdminMap();
     } catch (err) {
         console.error('Dashboard Sync Error:', err);
     }
