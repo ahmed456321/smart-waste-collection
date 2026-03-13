@@ -5,12 +5,11 @@ async function initAdminDashboard() {
         return;
     }
 
-    try {
-        await fetchStats();
-        await fetchDrivers();
-        if (typeof initAdminMap === 'function') initAdminMap();
-    } catch (err) {
-        console.error('Dashboard Sync Error:', err);
+    // Execute all fetches concurrently so one failure doesn't block others
+    fetchStats().catch(err => console.error('Stats Error:', err));
+    fetchDrivers().catch(err => console.error('Drivers Error:', err));
+    if (typeof initAdminMap === 'function') {
+        initAdminMap().catch(err => console.error('Map Error:', err));
     }
 }
 
@@ -63,7 +62,7 @@ function renderCompositionChart(categories) {
     window.compChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: categories.map(c => c._id.toUpperCase()),
+            labels: categories.map(c => String(c._id || 'Unknown').toUpperCase()),
             datasets: [{
                 data: categories.map(c => c.count),
                 backgroundColor: colors,
@@ -84,10 +83,10 @@ function renderCompositionChart(categories) {
     const metricsCont = document.getElementById('compMetrics');
     metricsCont.innerHTML = '';
     categories.slice(0, 3).forEach((c, i) => {
-        const percent = Math.round((c.count / total) * 100);
+        const percent = Math.round((c.count / total) * 100) || 0;
         metricsCont.innerHTML += `
             <div class="metric-item">
-                <div class="metric-info"><span>${c._id.toUpperCase()}</span><span>${percent}%</span></div>
+                <div class="metric-info"><span>${String(c._id || 'Unknown').toUpperCase()}</span><span>${percent}%</span></div>
                 <div class="progress-bar"><div class="fill" style="width: ${percent}%; background: ${colors[i % colors.length]};"></div></div>
             </div>
         `;
@@ -159,7 +158,9 @@ async function fetchDrivers() {
     if (select) {
         select.innerHTML = '<option value="">Select Available Dispatch Unit...</option>';
         drivers.forEach(d => {
-            select.innerHTML += `<option value="${d._id}">${d.name.toUpperCase()} (ID: ${d._id.substr(-4)})</option>`;
+            const dId = String(d._id);
+            const dNm = String(d.name || 'Unknown');
+            select.innerHTML += `<option value="${dId}">${dNm.toUpperCase()} (ID: ${dId.substr(-4)})</option>`;
         });
     }
 }
