@@ -94,10 +94,12 @@ if (loginForm) {
                 else if (data.user.role === 'citizen') window.location.href = 'index.html';
                 else window.location.reload();
             } else {
-                alert(data.error);
+                toggleLoading(false);
+                showToast(data.error || 'Login failed. Check your credentials.', 'error');
             }
         } catch (err) {
-            alert('Server connection failed');
+            toggleLoading(false);
+            showToast('Server connection failed. Please try again.', 'error');
         }
     };
 }
@@ -118,11 +120,11 @@ if (registerForm) {
         });
         const data = await res.json();
         if (data.message) {
-            alert('Registration Successful. Please Sign In.');
+            showToast('Registration Successful! Please Sign In.', 'success');
             hideModal('registerModal');
             showModal('loginModal');
         } else {
-            alert(data.error);
+            showToast(data.error || 'Registration failed. Try again.', 'error');
         }
     };
 }
@@ -163,10 +165,10 @@ if (reportForm) {
         e.preventDefault();
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id) {
-            alert('Authentication required for incident transmission.');
+            showToast('Authentication required. Please sign in.', 'error');
             return showModal('loginModal');
         }
-        if (!currentCoords) return alert('Please secure GPS coordinates first.');
+        if (!currentCoords) return showToast('Please secure GPS coordinates first.', 'error');
 
         const formData = new FormData();
         formData.append('category', document.getElementById('category').value);
@@ -184,8 +186,10 @@ if (reportForm) {
         const data = await res.json();
         toggleLoading(false);
         if (data._id) {
-            alert('Report Transmitted. Dispatch sequence initiated. Points earned!');
-            window.location.href = 'index.html';
+            showToast('Report Transmitted! Eco-points earned 🌱', 'success');
+            setTimeout(() => window.location.href = 'index.html', 2000);
+        } else {
+            showToast(data.error || 'Report failed. Please try again.', 'error');
         }
     };
 }

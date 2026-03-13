@@ -6,6 +6,7 @@
     <title>Dashboard | SmartWaste Control Center</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body onload="initAdminDashboard()">
@@ -151,6 +152,21 @@
         </main>
     </div>
 
+    <!-- Assign Driver Modal -->
+    <div id="assignModal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:5000; display:none; align-items:center; justify-content:center;">
+        <div class="glass-card" style="padding:2.5rem; max-width:450px; width:90%; border-radius:20px;">
+            <h2 style="margin-bottom:0.5rem;">Dispatch Unit</h2>
+            <p style="color:var(--text-muted); margin-bottom:2rem; font-size:0.9rem;">Report ID: <span id="assignReportId" style="color:var(--primary); font-family:monospace;"></span></p>
+            <select id="driverSelect" style="width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; color:white; margin-bottom:1.5rem; font-size:0.9rem;">
+                <option value="">Loading dispatch units...</option>
+            </select>
+            <div style="display:flex; gap:1rem;">
+                <button class="btn-premium" style="flex:1;" onclick="confirmAssignment()"><i class="fas fa-paper-plane"></i> Dispatch</button>
+                <button onclick="hideModal('assignModal')" style="flex:1; padding:12px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-muted); cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <style>
         /* Specific Dashboard Styles */
         .sidebar {
@@ -233,8 +249,8 @@
     </style>
 
     <script src="js/app.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initAdminMap"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/map.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 </html>

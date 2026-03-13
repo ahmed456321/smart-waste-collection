@@ -1,7 +1,6 @@
 async function initAdminDashboard() {
     const role = localStorage.getItem('role');
     if (role !== 'admin') {
-        alert('ACCESS DENIED: Administrative Credentials Required.');
         window.location.href = 'index.html';
         return;
     }
@@ -171,7 +170,7 @@ async function confirmAssignment() {
     const reportId = document.getElementById('assignReportId').innerText;
     const driverId = document.getElementById('driverSelect').value;
 
-    if (!driverId) return alert('Please select a dispatch unit.');
+    if (!driverId) return showToast('Please select a dispatch unit.', 'error');
 
     const res = await fetch('/api/admin/assign-task', {
         method: 'POST',
@@ -181,7 +180,7 @@ async function confirmAssignment() {
     
     if (res.ok) {
         hideModal('assignModal');
-        initAdminDashboard();
-        // Simulation: Trigger notification for driver (socket.io would be used here in production)
+        showToast('Unit dispatched successfully!', 'success');
+        fetchStats();
     }
 }
