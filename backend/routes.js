@@ -159,6 +159,49 @@ router.get('/auth/profile/:userId', async (req, res) => {
     }
 });
 
+// POST /api/auth/redeem  - Deduct eco-points for rewards
+router.post('/auth/redeem', protect, async (req, res) => {
+    try {
+        const { cost, rewardName } = req.body;
+        if (!cost || !rewardName) return res.status(400).json({ error: 'cost and rewardName required' });
+        
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (user.ecoPoints < cost) return res.status(400).json({ error: `Insufficient points. You need ${cost - user.ecoPoints} more.` });
+        
+        user.ecoPoints -= cost;
+        await user.save();
+        
+        res.json({ message: `${rewardName} redeemed successfully!`, ecoPoints: user.ecoPoints });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/public/live-feed  - Last 5 activities for homepage feed
+router.get('/public/live-feed', async (req, res) => {
+    try {
+        const recentReports = await Report.find({ status: { $in: ['pending', 'assigned', 'collected'] } })
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate('reportedBy', 'name');
+        
+        const feed = recentReports.map(r => ({
+            type: r.status === 'collected' ? 'resolved' : 'report',
+            text: r.status === 'collected'
+                ? `${r.assignedDriver ? 'Crew' : 'Team'} completed collection`
+                : `Citizen reported ${r.category} waste`,
+            location: r.location?.address || 'City Area',
+            time: r.createdAt,
+            points: r.status === 'collected' ? null : '+10 XP'
+        }));
+        
+        res.json(feed);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ─── WASTE REPORTS ────────────────────────────────────────────────────────────
 
 // POST /api/report  &  /api/citizen/report

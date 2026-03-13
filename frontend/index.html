@@ -22,6 +22,7 @@
             <div class="nav-links" id="navLinks">
                 <a href="index.html" class="active">Home</a>
                 <a href="report.html">Report Issue</a>
+                <a href="history.html" id="myActivityLink" style="display:none;">My Activity</a>
                 <a href="tips.html">Eco Tips</a>
                 <a href="dashboard.html" style="display: none;">Admin</a>
             </div>
@@ -108,26 +109,10 @@
         <h2 style="margin-bottom: 2rem;">Real-time <span class="text-gradient">Cleanup Activity</span></h2>
         <div class="glass-card" style="padding: 0; overflow: hidden;">
             <div id="liveFeed" style="max-height: 400px; overflow-y: auto;">
-                <!-- Activity Items -->
-                <div style="padding: 1.5rem; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); display: flex; align-items: center; justify-content: center; color: var(--primary);">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight: 600;">Citizen Sarah reported Plastic Waste</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">2 minutes ago · Downtown District</div>
-                    </div>
-                    <div style="margin-left: auto; color: var(--primary); font-weight: 700;">+10 XP</div>
-                </div>
-                <div style="padding: 1.5rem; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 1rem;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(59, 130, 246, 0.2); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
-                        <i class="fas fa-truck-pickup"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight: 600;">Crew Alpha completed Mission #821</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">15 minutes ago · Green Valley</div>
-                    </div>
-                    <div style="margin-left: auto; color: #3b82f6; font-weight: 700;">RESOLVED</div>
+                <!-- Activity Items — Populated by JS -->
+                <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                    <i class="fas fa-satellite-dish fa-spin" style="font-size: 2rem; margin-bottom: 1rem; display:block;"></i>
+                    Loading live feed...
                 </div>
             </div>
         </div>
@@ -536,6 +521,68 @@
             const nav = document.getElementById('navLinks');
             nav.classList.toggle('active');
         }
+
+        // Show 'My Activity' link if user is logged in
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const activityLink = document.getElementById('myActivityLink');
+            if (activityLink) activityLink.style.display = 'block';
+        }
+
+        // Load live activity feed from backend
+        async function loadLiveFeed() {
+            const container = document.getElementById('liveFeed');
+            if (!container) return;
+            try {
+                const res = await fetch(`${API_URL}/public/live-feed`);
+                if (!res.ok) { showFallbackFeed(container); return; }
+                const items = await res.json();
+                if (!items || items.length === 0) { showFallbackFeed(container); return; }
+
+                container.innerHTML = '';
+                items.forEach(item => {
+                    const isResolved = item.type === 'resolved';
+                    const color = isResolved ? '#3b82f6' : 'var(--primary)';
+                    const icon = isResolved ? 'fa-truck-pickup' : 'fa-user-check';
+                    const bgColor = isResolved ? 'rgba(59, 130, 246, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+                    const timeAgo = getTimeAgo(new Date(item.time));
+                    container.innerHTML += `
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: ${bgColor}; display: flex; align-items: center; justify-content: center; color: ${color}; flex-shrink:0;">
+                                <i class="fas ${icon}"></i>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600;">${item.text}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-muted);">${timeAgo} · ${item.location || 'City Area'}</div>
+                            </div>
+                            <div style="margin-left: auto; color: ${color}; font-weight: 700; white-space: nowrap;">${item.points || 'RESOLVED'}</div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                showFallbackFeed(container);
+            }
+        }
+
+        function showFallbackFeed(container) {
+            container.innerHTML = `
+                <div style="padding:2rem; text-align:center; color:var(--text-muted);">
+                    <i class="fas fa-check-circle" style="font-size:2rem; color:var(--primary); display:block; margin-bottom:1rem;"></i>
+                    No recent activity yet. Be the first to report an issue!
+                </div>
+            `;
+        }
+
+        function getTimeAgo(date) {
+            const diff = Math.floor((Date.now() - date) / 60000);
+            if (diff < 1) return 'Just now';
+            if (diff < 60) return `${diff} minute${diff > 1 ? 's' : ''} ago`;
+            const hrs = Math.floor(diff / 60);
+            if (hrs < 24) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`;
+            return `${Math.floor(hrs / 24)} days ago`;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadLiveFeed);
     </script>
 </body>
 </html>

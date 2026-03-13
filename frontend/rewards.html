@@ -96,21 +96,38 @@
 
     <script src="js/app.js"></script>
     <script>
+        // Load current points into header on page load
+        checkAuth();
+
         async function redeem(cost, name) {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            if (!user.id) return showModal('loginModal');
-            
-            if (user.ecoPoints < cost) {
-                return showToast(`INSUFFICIENT ENERGY: You need ${cost - user.ecoPoints} more points for this mission.`, 'error');
+            if (!user.id) return showModal('loginModal') || showToast('Please sign in first.', 'error');
+
+            const localPoints = user.ecoPoints || 0;
+            if (localPoints < cost) {
+                return showToast(`Insufficient points. You need ${cost - localPoints} more to claim this reward.`, 'error');
             }
 
-            // In a real app, this would be a POST to /api/auth/redeem
-            showToast(`MISSION ACCOMPLISHED: ${name} Redeemed! Check your email for details.`, 'success');
-            
-            // Local Simulation for instant gratification
-            user.ecoPoints -= cost;
-            localStorage.setItem('user', JSON.stringify(user));
-            checkAuth();
+            // Call backend to deduct points persistently
+            try {
+                const res = await fetchWithAuth(`${API_URL}/auth/redeem`, {
+                    method: 'POST',
+                    body: JSON.stringify({ cost, rewardName: name })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Update local storage with the fresh points from backend
+                    user.ecoPoints = data.ecoPoints;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    showToast(`✅ ${name} Redeemed! Check your email for details.`, 'success');
+                    checkAuth(); // Refresh points in navbar
+                } else {
+                    showToast(data.error || 'Redemption failed.', 'error');
+                }
+            } catch (err) {
+                showToast('Network error. Please try again.', 'error');
+            }
         }
     </script>
 </body>
