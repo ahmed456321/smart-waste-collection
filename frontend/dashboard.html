@@ -45,9 +45,9 @@
                         <button class="btn-icon" title="Pending Reports" onclick="alert('Check Report Feed for pending reports')"><i class="fas fa-bell"></i></button>
                         <span id="notifBadge" style="position:absolute;top:-5px;right:-5px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:0.65rem;font-weight:900;display:none;align-items:center;justify-content:center;">0</span>
                     </div>
-                    <a id="csvExportBtn" href="/api/admin/export-csv" target="_blank" class="btn-premium secondary" style="padding:8px 16px; font-size:0.85rem;" title="Export CSV">
+                    <button class="btn-premium secondary" style="padding:8px 16px; font-size:0.85rem;" onclick="exportCSV()" title="Export all reports as CSV" id="csvExportBtn">
                         <i class="fas fa-file-csv"></i> Export
-                    </a>
+                    </button>
                     <div class="user-profile glass-card">
                         <img src="https://ui-avatars.com/api/?name=Admin+User&background=10b981&color=fff" alt="Admin">
                         <div class="user-meta">

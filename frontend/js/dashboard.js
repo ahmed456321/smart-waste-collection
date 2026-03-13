@@ -41,6 +41,36 @@ async function loadNotificationBadge() {
     } catch (e) {}
 }
 
+async function exportCSV() {
+    const btn = document.getElementById('csvExportBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...'; }
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/admin/export-csv`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+            showToast('Export failed. Please try again.', 'error');
+            return;
+        }
+        // Trigger browser download from the blob response
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `smartwaste-reports-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast('Reports exported successfully!', 'success');
+    } catch (err) {
+        showToast('Export failed. Check your connection.', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-csv"></i> Export'; }
+    }
+}
+
 
 async function fetchStats() {
     const res = await fetchWithAuth(`${API_URL}/admin/stats`);
