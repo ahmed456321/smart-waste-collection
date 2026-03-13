@@ -204,6 +204,76 @@ router.get('/public/live-feed', async (req, res) => {
 
 // ─── WASTE REPORTS ────────────────────────────────────────────────────────────
 
+// GET /api/public/leaderboard - Top contributors
+router.get('/public/leaderboard', async (req, res) => {
+    try {
+        const topUsers = await User.find({ role: 'citizen' })
+            .sort({ ecoPoints: -1 })
+            .limit(10)
+            .select('name ecoPoints stats createdAt');
+        
+        const leaderboard = topUsers.map((u, i) => ({
+            rank: i + 1,
+            name: u.name,
+            points: u.ecoPoints,
+            reports: u.stats?.totalReports || 0,
+            joined: u.createdAt
+        }));
+        
+        res.json(leaderboard);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/auth/profile/update - Update name/bio
+router.put('/auth/profile/update', protect, async (req, res) => {
+    try {
+        const { name } = req.body;
+        const updates = {};
+        if (name) updates.name = name;
+        const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true }).select('-password');
+        res.json(user);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/pending-count - Fast count for notification bell
+router.get('/admin/pending-count', protect, authorize('admin'), async (req, res) => {
+    try {
+        const count = await Report.countDocuments({ status: 'pending' });
+        res.json({ count });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/export-csv - Export all reports as CSV
+router.get('/admin/export-csv', protect, authorize('admin'), async (req, res) => {
+    try {
+        const reports = await Report.find().sort({ createdAt: -1 })
+            .populate('reportedBy', 'name email')
+            .populate('assignedDriver', 'name');
+
+        const rows = [
+            ['Date', 'Category', 'Status', 'Reporter', 'Driver', 'Lat', 'Lng', 'Description']
+        ];
+        reports.forEach(r => {
+            rows.push([
+                new Date(r.createdAt).toLocaleDateString(),
+                r.category,
+                r.status,
+                r.reportedBy?.name || 'Anonymous',
+                r.assignedDriver?.name || '-',
+                r.location?.coordinates?.[1] || '',
+                r.location?.coordinates?.[0] || '',
+                (r.description || '').replace(/,/g, ';')
+            ]);
+        });
+
+        const csv = rows.map(r => r.join(',')).join('\n');
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=reports.csv');
+        res.send(csv);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
 // POST /api/report  &  /api/citizen/report
 const submitReport = async (req, res) => {
     try {

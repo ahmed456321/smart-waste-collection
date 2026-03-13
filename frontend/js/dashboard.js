@@ -11,7 +11,36 @@ async function initAdminDashboard() {
     if (typeof initAdminMap === 'function') {
         initAdminMap().catch(err => console.error('Map Error:', err));
     }
+
+    // Load notification badge count
+    loadNotificationBadge();
+    // Poll every 60 seconds for new pending reports
+    setInterval(loadNotificationBadge, 60000);
+
+    // Wire up CSV export with auth token in the URL
+    const token = localStorage.getItem('token');
+    const csvLink = document.getElementById('csvExportBtn');
+    if (csvLink && token) {
+        csvLink.href = `/api/admin/export-csv?token=${token}`;
+    }
 }
+
+async function loadNotificationBadge() {
+    try {
+        const res = await fetchWithAuth(`${API_URL}/admin/pending-count`);
+        if (!res || !res.ok) return;
+        const { count } = await res.json();
+        const badge = document.getElementById('notifBadge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.innerText = count > 9 ? '9+' : count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) {}
+}
+
 
 async function fetchStats() {
     const res = await fetchWithAuth(`${API_URL}/admin/stats`);

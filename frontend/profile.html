@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | SmartWaste</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar glass-card">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-recycle"></i></div>
+                <span>SMARTWASTE</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="report.html">Report Issue</a>
+                <a href="history.html">My Activity</a>
+                <a href="leaderboard.html">Leaderboard</a>
+                <a href="tips.html">Eco Tips</a>
+            </div>
+            <div class="nav-auth">
+                <button class="btn-icon" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding:5rem 5%;">
+        <!-- Profile Header -->
+        <div class="glass-card animate-in" style="display:grid; grid-template-columns:auto 1fr auto; gap:2rem; align-items:center; margin-bottom:2rem;">
+            <div id="profileAvatar" style="width:80px;height:80px;border-radius:50%;background:var(--grad-eco);display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:900;">?</div>
+            <div>
+                <h1 id="profileName" style="font-size:2rem; margin:0;">Loading...</h1>
+                <p id="profileEmail" style="color:var(--text-muted); margin:0.25rem 0 0;"></p>
+                <span id="profileBadge" class="badge-eco" style="margin-top:0.5rem; display:inline-block;">🌿 Newcomer</span>
+            </div>
+            <button class="btn-premium" onclick="toggleEdit()" id="editBtn"><i class="fas fa-edit"></i> Edit Profile</button>
+        </div>
+
+        <!-- Edit Form (hidden by default) -->
+        <div id="editForm" class="glass-card animate-in" style="display:none; margin-bottom:2rem;">
+            <h3 style="margin-bottom:1.5rem;"><i class="fas fa-user-edit" style="color:var(--primary);"></i> Update Profile</h3>
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="editName" placeholder="Your name">
+            </div>
+            <div style="display:flex; gap:1rem;">
+                <button class="btn-premium" onclick="saveProfile()"><i class="fas fa-save"></i> Save Changes</button>
+                <button class="btn-premium secondary" onclick="toggleEdit()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:1.5rem; margin-bottom:2rem;">
+            <div class="glass-card animate-in" style="text-align:center; border-top:3px solid var(--primary);">
+                <div style="font-size:2.5rem; font-weight:900; color:var(--primary);" id="statPoints">0</div>
+                <div style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Eco Points</div>
+            </div>
+            <div class="glass-card animate-in" style="text-align:center; border-top:3px solid var(--secondary);">
+                <div style="font-size:2.5rem; font-weight:900; color:var(--secondary);" id="statReports">0</div>
+                <div style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Reports Filed</div>
+            </div>
+            <div class="glass-card animate-in" style="text-align:center; border-top:3px solid var(--accent);">
+                <div style="font-size:2.5rem; font-weight:900; color:var(--accent);" id="statImpact">0</div>
+                <div style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Impact Score</div>
+            </div>
+            <div class="glass-card animate-in" style="text-align:center; border-top:3px solid #8b5cf6;">
+                <div style="font-size:2rem; font-weight:900; color:#8b5cf6;" id="statRank">—</div>
+                <div style="color:var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Global Rank</div>
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        <div class="glass-card animate-in" style="padding:0; overflow:hidden;">
+            <div style="padding:1.5rem 2rem; border-bottom:1px solid var(--glass-border);">
+                <h2>Recent Activity</h2>
+            </div>
+            <div id="recentActivity" style="max-height:400px; overflow-y:auto; padding:1rem 0;">
+                <div style="padding:2rem; text-align:center; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        .navbar { margin:20px auto; max-width:1200px; width:90%; position:sticky; top:20px; z-index:1000; padding:0.8rem 2rem; }
+        .nav-container { width:100%; display:flex; justify-content:space-between; align-items:center; }
+        .logo { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text-white); font-weight:800; }
+        .logo-icon { width:36px; height:36px; background:var(--grad-eco); border-radius:10px; display:flex; align-items:center; justify-content:center; }
+        .nav-links { display:flex; gap:2rem; }
+        .nav-links a { text-decoration:none; color:var(--text-muted); font-weight:500; transition:color 0.3s; }
+        .nav-links a:hover { color:var(--primary); }
+        .container { max-width:1200px; margin:0 auto; }
+        .badge-eco { padding:4px 16px; background:rgba(16,185,129,0.1); color:var(--primary); border:1px solid rgba(16,185,129,0.2); border-radius:20px; font-size:0.85rem; font-weight:600; }
+        .form-group { margin-bottom:1.5rem; }
+        .form-group label { display:block; margin-bottom:0.5rem; font-size:0.9rem; color:var(--text-muted); }
+        .form-group input { width:100%; padding:12px 16px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); border-radius:12px; color:white; font-size:1rem; outline:none; box-sizing:border-box; }
+        .form-group input:focus { border-color:var(--primary); }
+        .btn-icon { background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text-white); width:40px; height:40px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.3s; }
+        .btn-icon:hover { color:#ef4444; border-color:rgba(239,68,68,0.3); }
+        .nav-auth { display:flex; align-items:center; gap:0.5rem; }
+    </style>
+
+    <script src="js/app.js"></script>
+    <script>
+        let currentUser = {};
+
+        async function loadProfile() {
+            const stored = localStorage.getItem('user');
+            if (!stored) { window.location.href = 'index.html'; return; }
+            currentUser = JSON.parse(stored);
+
+            // Fetch fresh data
+            try {
+                const res = await fetchWithAuth(`${API_URL}/auth/profile/${currentUser.id || currentUser._id}`);
+                if (res && res.ok) {
+                    const fresh = await res.json();
+                    currentUser = { ...currentUser, ...fresh };
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                }
+            } catch (e) {}
+
+            // Populate UI
+            const name = currentUser.name || 'Unknown';
+            document.getElementById('profileAvatar').innerText = name.charAt(0).toUpperCase();
+            document.getElementById('profileName').innerText = name;
+            document.getElementById('profileEmail').innerText = currentUser.email || '';
+            document.getElementById('editName').value = name;
+            document.getElementById('statPoints').innerText = (currentUser.ecoPoints || 0).toLocaleString();
+            document.getElementById('statReports').innerText = currentUser.stats?.totalReports || 0;
+            document.getElementById('statImpact').innerText = currentUser.stats?.impactScore || currentUser.ecoPoints || 0;
+
+            // Badge
+            const pts = currentUser.ecoPoints || 0;
+            const badgeEl = document.getElementById('profileBadge');
+            if (pts >= 1000)     { badgeEl.innerText = '🏆 Champion'; badgeEl.style.color = '#f59e0b'; }
+            else if (pts >= 500) { badgeEl.innerText = '🌱 Guardian'; }
+            else if (pts >= 100) { badgeEl.innerText = '⚡ Activist'; badgeEl.style.color = '#6366f1'; }
+            else                 { badgeEl.innerText = '🌿 Newcomer'; }
+
+            // Rank
+            try {
+                const lb = await fetch(`${API_URL}/public/leaderboard`);
+                if (lb.ok) {
+                    const board = await lb.json();
+                    const me = board.find(u => u.name === currentUser.name);
+                    document.getElementById('statRank').innerText = me ? `#${me.rank}` : '—';
+                }
+            } catch (e) {}
+
+            // Recent Activity
+            loadRecentActivity();
+        }
+
+        async function loadRecentActivity() {
+            const el = document.getElementById('recentActivity');
+            try {
+                const res = await fetchWithAuth(`${API_URL}/my-reports/${currentUser.id || currentUser._id}`);
+                if (!res || !res.ok) throw new Error();
+                const reports = await res.json();
+
+                if (!reports.length) {
+                    el.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">No reports yet. <a href="report.html" style="color:var(--primary);">Report your first issue!</a></div>';
+                    return;
+                }
+
+                el.innerHTML = reports.slice(0,5).map(r => `
+                    <div style="padding:1.25rem 2rem; border-bottom:1px solid var(--glass-border); display:flex; align-items:center; gap:1rem;">
+                        <div style="width:40px;height:40px;border-radius:10px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;color:var(--primary);font-size:1.2rem;">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">${r.category?.toUpperCase()} waste reported</div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">${new Date(r.createdAt).toLocaleDateString()}</div>
+                        </div>
+                        <span class="badge ${r.status}">${r.status}</span>
+                    </div>
+                `).join('');
+
+            } catch (e) {
+                el.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Failed to load activity.</div>';
+            }
+        }
+
+        function toggleEdit() {
+            const form = document.getElementById('editForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('editName').value.trim();
+            if (!name) return showToast('Name cannot be empty.', 'error');
+
+            try {
+                const res = await fetchWithAuth(`${API_URL}/auth/profile/update`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ name })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentUser.name = data.name;
+                    localStorage.setItem('user', JSON.stringify(currentUser));
+                    document.getElementById('profileName').innerText = data.name;
+                    document.getElementById('profileAvatar').innerText = data.name.charAt(0).toUpperCase();
+                    showToast('Profile updated successfully!', 'success');
+                    toggleEdit();
+                } else {
+                    showToast(data.error || 'Update failed.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error.', 'error');
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

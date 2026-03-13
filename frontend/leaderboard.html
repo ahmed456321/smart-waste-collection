@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard | SmartWaste</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar glass-card" id="mainNav">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon"><i class="fas fa-recycle"></i></div>
+                <span>SMARTWASTE</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="report.html">Report Issue</a>
+                <a href="history.html">My Activity</a>
+                <a href="leaderboard.html" class="active">Leaderboard</a>
+                <a href="tips.html">Eco Tips</a>
+            </div>
+            <div id="userInfo" class="points-badge" style="display:none;">
+                <i class="fas fa-leaf"></i> <span id="userPoints">0</span> pts
+            </div>
+        </div>
+    </nav>
+
+    <main class="container" style="padding: 5rem 5%;">
+        <div style="text-align:center; margin-bottom:3rem;" class="animate-in">
+            <span class="badge-eco">Community Champions</span>
+            <h1 style="font-size:3rem; margin:1rem 0;">Eco <span class="text-gradient">Leaderboard</span></h1>
+            <p style="color:var(--text-muted); max-width:600px; margin:0 auto;">Top citizens making a difference. Every report counts towards a cleaner city.</p>
+        </div>
+
+        <!-- Top 3 Podium -->
+        <div id="podium" style="display:flex; justify-content:center; align-items:flex-end; gap:1rem; margin-bottom:3rem; min-height:180px;">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Full Table -->
+        <div class="glass-card animate-in" style="padding:0; overflow:hidden;">
+            <div style="padding:1.5rem 2rem; border-bottom:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center;">
+                <h2>Full Rankings</h2>
+                <span class="status-indicator live">LIVE</span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>#</th><th>CITIZEN</th><th>ECO POINTS</th><th>REPORTS</th><th>BADGE</th></tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                            <i class="fas fa-spinner fa-spin"></i> Loading rankings...
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        .navbar { margin:20px auto; max-width:1200px; width:90%; position:sticky; top:20px; z-index:1000; padding:0.8rem 2rem; }
+        .nav-container { width:100%; display:flex; justify-content:space-between; align-items:center; }
+        .logo { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text-white); font-weight:800; }
+        .logo-icon { width:36px; height:36px; background:var(--grad-eco); border-radius:10px; display:flex; align-items:center; justify-content:center; }
+        .nav-links { display:flex; gap:2rem; }
+        .nav-links a { text-decoration:none; color:var(--text-muted); font-weight:500; transition:color 0.3s; }
+        .nav-links a:hover, .nav-links a.active { color:var(--primary); }
+        .container { max-width:1200px; margin:0 auto; }
+        .text-gradient { background:var(--grad-eco); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+        .badge-eco { display:inline-block; padding:4px 16px; background:rgba(16,185,129,0.1); color:var(--primary); border:1px solid rgba(16,185,129,0.2); border-radius:20px; font-size:0.85rem; font-weight:600; }
+        .status-indicator.live { background:rgba(16,185,129,0.15); color:var(--primary); padding:4px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; letter-spacing:1px; border:1px solid rgba(16,185,129,0.3); }
+        .points-badge { background:rgba(132,204,22,0.1); color:var(--secondary); border:1px solid rgba(132,204,22,0.2); padding:6px 12px; border-radius:12px; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:6px; }
+
+        .podium-item { text-align:center; padding:1rem; border-radius:16px; min-width:140px; }
+        .podium-item .rank-num { font-size:2.5rem; font-weight:900; }
+        .podium-item .p-name { font-weight:700; font-size:1rem; margin:0.5rem 0; }
+        .podium-item .p-pts { font-size:0.9rem; color:var(--text-muted); }
+        .podium-avatar { width:60px; height:60px; border-radius:50%; background:var(--grad-eco); display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:800; margin:0 auto 0.75rem; }
+
+        .badge-gold { color:#f59e0b; }
+        .badge-silver { color:#94a3b8; }
+        .badge-bronze { color:#b87333; }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    </style>
+
+    <script src="js/app.js"></script>
+    <script>
+        checkAuth();
+
+        async function loadLeaderboard() {
+            const body = document.getElementById('leaderboardBody');
+            const podium = document.getElementById('podium');
+
+            try {
+                const res = await fetch(`${API_URL}/public/leaderboard`);
+                const data = await res.json();
+
+                if (!data.length) {
+                    body.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--text-muted);">No citizens yet. Be the first to report!</td></tr>';
+                    return;
+                }
+
+                // Build podium (top 3)
+                const badges = ['🥇','🥈','🥉'];
+                const colors = ['rgba(245,158,11,0.15)','rgba(148,163,184,0.1)','rgba(184,115,51,0.1)'];
+                const heights = ['180px','140px','120px'];
+                const order = [1,0,2]; // 2nd, 1st, 3rd
+
+                podium.innerHTML = order.map(i => {
+                    const u = data[i];
+                    if (!u) return '';
+                    return `
+                        <div class="podium-item glass-card animate-in" style="background:${colors[i]};padding-top:${i===0?'2rem':'1rem'}; flex:${i===0?'1.3':'1'}; max-width:${i===0?'200px':'160px'};">
+                            <div class="podium-avatar">${u.name.charAt(0).toUpperCase()}</div>
+                            <div class="rank-num">${badges[i]}</div>
+                            <div class="p-name">${u.name}</div>
+                            <div class="p-pts"><i class="fas fa-leaf"></i> ${u.points} pts</div>
+                        </div>`;
+                }).join('');
+
+                // Build table
+                const badgeMap = (pts) => {
+                    if (pts >= 1000) return '<span style="color:#f59e0b;">🏆 Champion</span>';
+                    if (pts >= 500)  return '<span style="color:#10b981;">🌱 Guardian</span>';
+                    if (pts >= 100)  return '<span style="color:#6366f1;">⚡ Activist</span>';
+                    return '<span style="color:#94a3b8;">🌿 Newcomer</span>';
+                };
+
+                body.innerHTML = data.map(u => `
+                    <tr style="${u.rank <= 3 ? 'background:rgba(16,185,129,0.03);' : ''}">
+                        <td><strong style="color:${u.rank<=3?'var(--primary)':'var(--text-muted)'};">${u.rank <= 3 ? ['🥇','🥈','🥉'][u.rank-1] : '#'+u.rank}</strong></td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="width:36px;height:36px;border-radius:50%;background:var(--grad-eco);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;">${u.name.charAt(0).toUpperCase()}</div>
+                                <span style="font-weight:600;">${u.name}</span>
+                            </div>
+                        </td>
+                        <td><strong style="color:var(--primary);">${u.points.toLocaleString()}</strong></td>
+                        <td>${u.reports}</td>
+                        <td>${badgeMap(u.points)}</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Failed to load leaderboard.</td></tr>';
+            }
+        }
+
+        loadLeaderboard();
+    </script>
+</body>
+</html>

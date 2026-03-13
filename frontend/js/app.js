@@ -4,6 +4,28 @@ const API_URL = '/api';
 function showModal(id) { document.getElementById(id).style.display = 'block'; }
 function hideModal(id) { document.getElementById(id).style.display = 'none'; }
 
+// --- Theme Toggle ---
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    // Update icon on any theme-toggle buttons
+    document.querySelectorAll('.theme-toggle i').forEach(el => {
+        el.className = isLight ? 'fas fa-moon' : 'fas fa-sun';
+    });
+}
+// Apply saved theme on load
+(function applyTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') {
+        document.body.classList.add('light-mode');
+        // Icon will update once DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.theme-toggle i').forEach(el => el.className = 'fas fa-moon');
+        });
+    }
+})();
+
+
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
